@@ -1,0 +1,24 @@
+[package]
+name = "rfq"
+version = "2.2.0"
+description = "Created with Anchor"
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "rfq"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.28.0", features = ["init-if-needed"] }
+anchor-spl = "0.28.0"
+solana-program = "1.14.16"
+borsh = { version = "0.9.1", features = ["const-generics"] }
+solana-security-txt = "1.1.1"
+spl-token-2022 = { version = "0.9", features = ["no-entrypoint"] }
