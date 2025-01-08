@@ -39,7 +39,6 @@ import {
   withTokenDecimals,
 } from "../helpers";
 import { loadPubkeyNaming, readKeypair } from "../fixtures";
-import { HxroPrintTradeProvider } from "../printTradeProviders/hxroPrintTradeProvider";
 import { CollateralMint, Mint } from "./mints";
 import { RfqContent, Whitelist, Rfq } from "./rfq";
 import { VaultOperator } from "./vaultOperator";
@@ -546,41 +545,6 @@ export class Context {
     return whitelistObject;
   }
 
-  async createPrintTradeRfq({
-    printTradeProvider,
-    orderType = DEFAULT_ORDER_TYPE,
-    fixedSize = FixedSize.None,
-    activeWindow = DEFAULT_ACTIVE_WINDOW,
-    settlingWindow = DEFAULT_SETTLING_WINDOW,
-    verify = true,
-    finalize = true,
-  }: {
-    printTradeProvider: HxroPrintTradeProvider;
-    orderType?: OrderType;
-    fixedSize?: FixedSize;
-    activeWindow?: number;
-    settlingWindow?: number;
-    verify?: boolean;
-    finalize?: boolean;
-  }) {
-    const baseAssetIndecies = printTradeProvider.getBaseAssetIndexes();
-    const baseAssetAccounts = baseAssetIndecies.map((index) => toBaseAssetAccount(index, this.program));
-
-    return await this.createRfqInner(
-      printTradeProvider.getLegData(),
-      printTradeProvider.getLegData(),
-      printTradeProvider.getQuoteData(),
-      baseAssetAccounts,
-      { type: "printTradeProvider", provider: printTradeProvider },
-      orderType,
-      fixedSize,
-      activeWindow,
-      settlingWindow,
-      verify,
-      finalize
-    );
-  }
-
   private async createRfqInner(
     legData: LegData[],
     allLegData: LegData[],
@@ -596,13 +560,12 @@ export class Context {
     whitelistPubkeyList: PublicKey[] = []
   ) {
     const serializedLegData = serializeLegData(allLegData, this.program);
-
     const currentTimestamp = new BN(Math.floor(Date.now() / 1000));
-    const printTradeProvider = rfqContent.type == "printTradeProvider" ? rfqContent.provider.getProgramId() : null;
+    
     const rfq = await getRfqPda(
       this.taker.publicKey,
       serializedLegData.hash,
-      printTradeProvider,
+      null,
       orderType,
       quoteData,
       fixedSize,
@@ -624,9 +587,8 @@ export class Context {
         serializedLegData.data.length,
         Array.from(serializedLegData.hash),
         legData,
-        printTradeProvider,
-        orderType,
         quoteData,
+        orderType,
         fixedSize,
         activeWindow,
         settlingWindow,
@@ -644,9 +606,6 @@ export class Context {
       .signers([this.taker]);
 
     const postInstructions = [];
-    if (verify && rfqContent.type == "printTradeProvider") {
-      postInstructions.push(await rfqObject.getValidateByPrintTradeProviderInstruction());
-    }
     if (finalize) {
       postInstructions.push(await rfqObject.getFinalizeConstructionInstruction());
     }

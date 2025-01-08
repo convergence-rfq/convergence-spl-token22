@@ -21,7 +21,6 @@ use instructions::collateral::initialize_collateral::*;
 use instructions::collateral::withdraw_collateral::*;
 use instructions::protocol::add_base_asset::*;
 use instructions::protocol::add_instrument::*;
-use instructions::protocol::add_print_trade_provider::*;
 use instructions::protocol::add_user_asset::*;
 use instructions::protocol::change_base_asset_parameters::*;
 use instructions::protocol::change_protocol_fees::*;
@@ -43,17 +42,13 @@ use instructions::rfq::partially_settle_escrow_legs::*;
 use instructions::rfq::partly_revert_escrow_settlement_preparation::*;
 use instructions::rfq::prepare_escrow_settlement::*;
 use instructions::rfq::prepare_more_escrow_legs_settlement::*;
-use instructions::rfq::prepare_print_trade_settlement::*;
 use instructions::rfq::respond_to_rfq::*;
 use instructions::rfq::revert_escrow_settlement_preparation::*;
-use instructions::rfq::revert_print_trade_settlement_preparation::*;
 use instructions::rfq::settle_escrow::*;
 use instructions::rfq::settle_one_party_default::*;
-use instructions::rfq::settle_print_trade::*;
 use instructions::rfq::settle_two_party_default::*;
 use instructions::rfq::unlock_response_collateral::*;
 use instructions::rfq::unlock_rfq_collateral::*;
-use instructions::rfq::validate_rfq_by_print_trade_provider::*;
 use instructions::whitelist::cleanup_whitelist::*;
 use instructions::whitelist::create_whitelist::*;
 
@@ -102,18 +97,6 @@ pub mod rfq {
             settle_account_amount,
             revert_preparation_account_amount,
             clean_up_account_amount,
-        )
-    }
-
-    pub fn add_print_trade_provider(
-        ctx: Context<AddPrintTradeProviderAccounts>,
-        validate_response_account_amount: u8,
-        settlement_can_expire: bool,
-    ) -> Result<()> {
-        add_print_trade_provider_instruction(
-            ctx,
-            validate_response_account_amount,
-            settlement_can_expire,
         )
     }
 
@@ -248,12 +231,6 @@ pub mod rfq {
         add_legs_to_rfq_instruction(ctx, legs)
     }
 
-    pub fn validate_rfq_by_print_trade_provider<'info>(
-        ctx: Context<'_, '_, '_, 'info, ValidateRfqByPrintTradeProviderAccounts<'info>>,
-    ) -> Result<()> {
-        validate_rfq_by_print_trade_provider_instruction(ctx)
-    }
-
     pub fn finalize_rfq_construction<'info>(
         ctx: Context<'_, '_, '_, 'info, FinalizeRfqConstructionAccounts<'info>>,
     ) -> Result<()> {
@@ -302,13 +279,6 @@ pub mod rfq {
         prepare_more_escrow_legs_settlement_instruction(ctx, side, leg_amount_to_prepare)
     }
 
-    pub fn prepare_print_trade_settlement<'info>(
-        ctx: Context<'_, '_, '_, 'info, PreparePrintTradeSettlementAccounts<'info>>,
-        side: AuthoritySide,
-    ) -> Result<()> {
-        prepare_print_trade_settlement_instruction(ctx, side)
-    }
-
     pub fn settle_escrow<'info>(
         ctx: Context<'_, '_, '_, 'info, SettleEscrowAccounts<'info>>,
     ) -> Result<()> {
@@ -321,12 +291,6 @@ pub mod rfq {
         leg_amount_to_settle: u8,
     ) -> Result<()> {
         partially_settle_escrow_legs_instruction(ctx, leg_amount_to_settle)
-    }
-
-    pub fn settle_print_trade<'info>(
-        ctx: Context<'_, '_, '_, 'info, SettlePrintTradeAccounts<'info>>,
-    ) -> Result<()> {
-        settle_print_trade_instruction(ctx)
     }
 
     pub fn expire_settlement(ctx: Context<ExpireSettlementAccounts>) -> Result<()> {
@@ -346,13 +310,6 @@ pub mod rfq {
         leg_amount_to_revert: u8,
     ) -> Result<()> {
         partly_revert_escrow_settlement_preparation_instruction(ctx, side, leg_amount_to_revert)
-    }
-
-    pub fn revert_print_trade_settlement_preparation_preparation<'info>(
-        ctx: Context<'_, '_, '_, 'info, RevertPrintTradeSettlementPreparationAccounts<'info>>,
-        side: AuthoritySide,
-    ) -> Result<()> {
-        revert_print_trade_settlement_preparation_instruction(ctx, side)
     }
 
     pub fn unlock_response_collateral(

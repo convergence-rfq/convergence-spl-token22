@@ -24,7 +24,6 @@ pub struct ProtocolState {
 
     pub risk_engine: Pubkey,
     pub collateral_mint: Pubkey,
-    pub print_trade_providers: Vec<PrintTradeProvider>,
     pub instruments: Vec<Instrument>,
     pub asset_add_fee: u64, // amount of sol to pay for adding user asset to the protocol
 
@@ -78,13 +77,35 @@ impl ProtocolState {
         );
         Ok(())
     }
-}
 
-#[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
-pub struct PrintTradeProvider {
-    pub program_key: Pubkey,
-    pub validate_response_account_amount: u8,
-    pub settlement_can_expire: bool,
+    pub fn validate_collateral_mint(&self, mint: &Pubkey, token_program: &Pubkey) -> Result<()> {
+        require!(
+            mint == &self.collateral_mint,
+            ProtocolError::NotACollateralMint
+        );
+        
+        // Allow both SPL Token and Token-2022 for collateral
+        self.validate_token_program(token_program)?;
+        
+        Ok(())
+    }
+
+    pub fn validate_escrow_account(
+        &self,
+        escrow_account: &Account<TokenAccount>,
+        token_program: &AccountInfo,
+    ) -> Result<()> {
+        // Validate the token program
+        self.validate_token_program(token_program.key)?;
+        
+        // Validate escrow account mint matches collateral mint
+        require!(
+            escrow_account.mint == self.collateral_mint,
+            ProtocolError::NotACollateralTokenAccount
+        );
+        
+        Ok(())
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
@@ -266,4 +287,34 @@ pub struct MintInfo {
 pub enum MintType {
     Stablecoin,
     AssetWithRisk { base_asset_index: BaseAssetIndex },
+}
+
+impl MintInfo {
+    pub fn validate_stablecoin(&self, token_program: &Pubkey) -> Result<()> {
+        match self.mint_type {
+            MintType::Stablecoin => {
+                // USDC is only on SPL Token program
+                require!(
+                    *token_program == spl_token::ID,
+                    ProtocolError::InvalidTokenProgram
+                );
+                Ok(())
+            },
+            _ => err!(ProtocolError::NotACollateralMint)
+        }
+    }
+
+    pub fn validate_collateral(&self, token_program: &Pubkey) -> Result<()> {
+        // Allow any token type that's registered in the protocol
+        match self.mint_type {
+            MintType::Stablecoin | MintType::AssetWithRisk { .. } => {
+                // Validate the token program is supported by the protocol
+                require!(
+                    *token_program == spl_token::ID || *token_program == spl_token_2022::ID,
+                    ProtocolError::InvalidTokenProgram
+                );
+                Ok(())
+            }
+        }
+    }
 }

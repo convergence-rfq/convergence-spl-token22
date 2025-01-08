@@ -1,13 +1,20 @@
 [workspace]
+resolver = "2"  # Required for edition 2021
 members = [
     "rfq/program",
     "risk-engine/program",
     "spot-instrument/program",
     "psyoptions-american-instrument/program",
     "psyoptions-european-instrument/program",
-    "hxro-print-trade-provider/program",
     "vault-operator/program",
 ]
 
 [profile.release]
 overflow-checks = true
+
+[workspace.dependencies]
+# Update to versions compatible with rustc 1.80.1
+solana-program = "1.16.13"  # More recent version compatible with your rustc
+anchor-lang = "0.28.0"
+anchor-spl = "0.28.0"
+spl-token-2022 = { version = "0.9", features = ["no-entrypoint"] }

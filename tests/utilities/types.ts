@@ -206,3 +206,6 @@ export type SettlementTypeInfo =
       instrument: { instrumentIndex: number };
     }
   | { printTrade: { instrumentType: number } };
+
+// This file likely contains the TypeScript interfaces for risk parameters
+// that are used to feed data into the contract

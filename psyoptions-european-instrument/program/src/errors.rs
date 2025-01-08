@@ -30,4 +30,6 @@ pub enum PsyoptionsEuropeanError {
     PassedExpirationTimestampDoesNotMatch,
     #[msg("Stablecoin as base asset is not supported")]
     StablecoinAsBaseAssetIsNotSupported,
+    #[msg("Invalid token program")]
+    InvalidTokenProgram,
 }

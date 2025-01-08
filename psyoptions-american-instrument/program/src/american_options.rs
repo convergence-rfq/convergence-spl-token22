@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token_interface::{TokenAccount, TokenInterface};
 
 // Imported from psy_american v0.2.7 package as it has outdated dependencies
 // TODO: try to make project build using psy_american package and import from there
@@ -86,4 +87,24 @@ impl anchor_lang::Owner for OptionMarket {
     fn owner() -> Pubkey {
         ID
     }
+}
+
+pub fn write_option(ctx: Context<WriteOption>) -> Result<()> {
+    // Validate token program
+    ctx.accounts.option_market.validate_token_program(&ctx.accounts.token_program.key())?;
+    
+    // Use token_interface for transfers
+    anchor_spl::token_interface::transfer(
+        CpiContext::new(
+            ctx.accounts.token_program.to_account_info(),
+            Transfer {
+                from: ctx.accounts.writer_token_account.to_account_info(),
+                to: ctx.accounts.vault.to_account_info(),
+                authority: ctx.accounts.writer.to_account_info(),
+            },
+        ),
+        amount,
+    )?;
+    
+    Ok(())
 }

@@ -27,11 +27,12 @@ import { OracleSource, RiskCategory } from "../utilities/types";
 import {
   fixtureAccountsPath,
   getKeypairPath,
-  loadHxroPubkeyNaming,
   pubkeyNamingFilePath,
   readKeypair,
 } from "../utilities/fixtures";
-import { HxroPrintTradeProvider } from "../utilities/printTradeProviders/hxroPrintTradeProvider";
+
+// This script is used to generate test fixtures including risk parameters
+// and feed them into the contract during testing/deployment
 
 const ledgerPath = path.join(".anchor", "test-ledger");
 const buildDirectoryPath = path.join("target", "deploy");
@@ -119,17 +120,7 @@ async function main() {
       await saveAccountAsFixture(context, configAddress, "spot-instrument-config");
     },
     async () => {
-      await HxroPrintTradeProvider.addPrintTradeProvider(context);
-
-      const hxroAddresses = inversePubkeyToName(await loadHxroPubkeyNaming());
-      const mpgAddress = hxroAddresses["mpg"];
-      await HxroPrintTradeProvider.initializeConfig(context, mpgAddress);
-
-      const configAddress = HxroPrintTradeProvider.getConfigAddress();
-      await saveAccountAsFixture(context, configAddress, "hxro-print-trade-provider-config");
-    },
-    // initialize and fund collateral accounts`
-    async () => {
+      // initialize and fund collateral accounts`
       await context.initializeCollateral(context.taker);
       await context.fundCollateral(context.taker, DEFAULT_COLLATERAL_FUNDED);
       await saveCollateralPdas(context, context.taker.publicKey, "taker");

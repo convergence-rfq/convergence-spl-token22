@@ -28,4 +28,6 @@ pub enum PsyoptionsAmericanError {
     DecimalsAmountDoesNotMatch,
     #[msg("Base Asset doesnt match")]
     BaseAssetDoesNotMatch,
+    #[msg("Invalid token program")]
+    InvalidTokenProgram,
 }
