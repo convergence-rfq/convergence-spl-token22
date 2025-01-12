@@ -182,6 +182,10 @@ pub fn create_rfq_instruction<'info>(
 
     rfq.set_inner(Rfq {
         taker: taker.key(),
+        maker: ctx.accounts.maker.key(),
+        maker_token: ctx.accounts.maker_token.key(),
+        taker_token: ctx.accounts.taker_token.key(),
+        token_program: ctx.accounts.token_program.key(),
         order_type,
         fixed_size,
         quote_asset,

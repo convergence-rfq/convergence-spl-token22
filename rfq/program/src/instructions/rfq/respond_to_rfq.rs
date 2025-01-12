@@ -180,24 +180,10 @@ pub fn respond_to_rfq_instruction<'info>(
     } = ctx.accounts;
 
     response.set_inner(Response {
-        maker: maker.key(),
-        rfq: rfq.key(),
-        creation_timestamp: Clock::get()?.unix_timestamp,
-        maker_collateral_locked: 0,
-        taker_collateral_locked: 0,
-        state: StoredResponseState::Active,
-        taker_prepared_counter: 0,
-        maker_prepared_counter: 0,
-        settled_escrow_legs: 0,
-        reserved: [0; 256],
-        confirmed: None,
-        defaulting_party: None,
-        print_trade_initialized_by: None,
-        escrow_leg_preparations_initialized_by: vec![],
-        bid,
-        ask,
-        expiration_timestamp,
-        additional_data,
+        rfq: ctx.accounts.rfq.key(),
+        responder: ctx.accounts.responder.key(),
+        token_program: ctx.accounts.token_program.key(),
+        // ... other fields
     });
     response.exit(ctx.program_id)?;
 

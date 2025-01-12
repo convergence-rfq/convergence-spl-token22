@@ -37,27 +37,19 @@ pub fn initialize_protocol_instruction(
     default_fees: FeeParameters,
     asset_add_fee: u64,
 ) -> Result<()> {
-    validate(settle_fees, default_fees)?;
-
-    let InitializeProtocolAccounts {
-        protocol,
-        risk_engine,
-        collateral_mint,
-        ..
-    } = ctx.accounts;
-    protocol.set_inner(ProtocolState {
+    let protocol = &mut ctx.accounts.protocol;
+    *protocol = ProtocolState {
         authority: ctx.accounts.signer.key(),
         bump: *ctx.bumps.get("protocol").unwrap(),
         active: true,
         settle_fees,
         default_fees,
-        risk_engine: risk_engine.key(),
-        collateral_mint: collateral_mint.key(),
-        print_trade_providers: Default::default(),
-        instruments: Default::default(),
+        risk_engine: Pubkey::default(),
+        collateral_mint: Pubkey::default(),
+        instruments: Vec::new(),
         asset_add_fee,
         reserved: [0; 1016],
-    });
-
+        supported_token_programs: Vec::new(),
+    };
     Ok(())
 }

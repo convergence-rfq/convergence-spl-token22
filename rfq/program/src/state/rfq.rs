@@ -1,7 +1,6 @@
 use std::io;
-
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{TokenAccount, TokenInterface};
+use anchor_spl::token_interface::TokenAccount;
 
 use crate::errors::ProtocolError;
 
@@ -10,12 +9,15 @@ use super::protocol::BaseAssetIndex;
 #[account]
 pub struct Rfq {
     pub taker: Pubkey,
-
+    pub maker: Pubkey,
+    pub maker_token: Pubkey,
+    pub taker_token: Pubkey,
+    pub token_program: Pubkey,
     pub order_type: OrderType,
-    pub fixed_size: FixedSize,
+    pub fixed_size: bool,
     pub quote_asset: QuoteAsset,
-
     pub creation_timestamp: i64,
+
     pub active_window: u32,
     pub settling_window: u32,
 
@@ -33,7 +35,6 @@ pub struct Rfq {
 
     pub print_trade_provider: Option<Pubkey>, // move higher after replacing with nullable wrapper
     pub legs: Vec<Leg>,                       // TODO add limit for this size
-    pub token_program: Pubkey,
 }
 
 impl Rfq {
@@ -81,7 +82,7 @@ impl Rfq {
     }
 
     pub fn is_fixed_size(&self) -> bool {
-        !matches!(self.fixed_size, FixedSize::None { padding: _ })
+        matches!(self.fixed_size, true)
     }
 
     pub fn get_asset_instrument_data(&self, asset_identifier: AssetIdentifier) -> &Vec<u8> {
@@ -111,13 +112,13 @@ impl Rfq {
         require!(
             maker_token_account.mint == self.maker_token 
             && taker_token_account.mint == self.taker_token,
-            ErrorCode::InvalidTokenAccount
+            ProtocolError::InvalidTokenAccount
         );
         
         require!(
             maker_token_account.owner == self.maker 
             && taker_token_account.owner == self.taker,
-            ErrorCode::InvalidTokenAccount
+            ProtocolError::InvalidTokenAccount
         );
         
         Ok(())
@@ -126,9 +127,9 @@ impl Rfq {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct QuoteAsset {
+    pub pubkey: Pubkey,
     pub settlement_type_metadata: SettlementTypeMetadata,
     pub data: Vec<u8>,
-    pub decimals: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -193,9 +194,9 @@ impl SettlementTypeMetadata {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
 pub enum FixedSize {
-    None { padding: u64 }, // for consistent serialization purposes
+    None { padding: u64 },
     BaseAsset { legs_multiplier_bps: u64 },
-    QuoteAsset { quote_amount: u64 }, // only a positive quote amount allowed. If a negative one is required, the leg structure can be inversed in the RFQ
+    QuoteAsset { quote_amount: u64 },
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
@@ -271,15 +272,11 @@ impl AnchorSerialize for AssetIdentifier {
 impl AnchorDeserialize for AssetIdentifier {
     fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
         let bytes: (u8, u8) = AnchorDeserialize::deserialize(buf)?;
-        let value = match bytes {
-            (0, leg_index) => AssetIdentifier::Leg { leg_index },
-            (1, 0) => AssetIdentifier::Quote,
-            _ => {
-                let msg = format!("Unexpected bytes: {:?}", bytes);
-                return Err(io::Error::new(io::ErrorKind::InvalidInput, msg));
-            }
-        };
+        Ok(Self::from_bytes(bytes))
+    }
 
-        Ok(value)
+    fn deserialize_reader<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self> {
+        let bytes: (u8, u8) = AnchorDeserialize::deserialize_reader(reader)?;
+        Ok(Self::from_bytes(bytes))
     }
 }

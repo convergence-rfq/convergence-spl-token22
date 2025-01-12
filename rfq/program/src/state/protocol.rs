@@ -33,7 +33,7 @@ pub struct ProtocolState {
 }
 
 impl ProtocolState {
-    pub const MAX_PRINT_TRADE_PROVIDERS: usize = 5;
+    pub const MAX_SUPPORTED_TOKEN_PROGRAMS: usize = 2;
     pub const MAX_INSTRUMENTS: usize = 50;
 
     pub fn get_allocated_size() -> usize {
@@ -41,7 +41,6 @@ impl ProtocolState {
         // TODO: rework from pre-allocating to reallocating on new elements addition
         8 + mem::size_of::<Self>()
             + Self::MAX_INSTRUMENTS * mem::size_of::<Instrument>()
-            + Self::MAX_PRINT_TRADE_PROVIDERS * mem::size_of::<PrintTradeProvider>()
     }
 
     pub fn get_instrument_parameters(&self, instrument_index: u8) -> Result<&Instrument> {
@@ -58,16 +57,6 @@ impl ProtocolState {
             .iter_mut()
             .find(|x| x.program_key == instrument_key)
             .ok_or_else(|| error!(ProtocolError::NotAWhitelistedInstrument))
-    }
-
-    pub fn get_print_trade_provider_parameters(
-        &self,
-        print_trade_provider_key: Pubkey,
-    ) -> Result<&PrintTradeProvider> {
-        self.print_trade_providers
-            .iter()
-            .find(|x| x.program_key == print_trade_provider_key)
-            .ok_or_else(|| error!(ProtocolError::NotAWhitelistedPrintTradeProvider))
     }
 
     pub fn validate_token_program(&self, token_program: &Pubkey) -> Result<()> {
@@ -165,7 +154,7 @@ pub struct BaseAssetInfo {
     pub oracle_source: OracleSource,
     // next several fields should be accessed through accessors and not directly
     // as a default value there means that the value is not set
-    // storing the Option directly would result in different account sizes for Some and None value
+    // storing the Option directly would result in different account sizesProtocolState for Some and None value
     switchboard_oracle: Pubkey,
     pyth_oracle: Pubkey,
     in_place_price: f64,

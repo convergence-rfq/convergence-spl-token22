@@ -11,7 +11,7 @@ pub use self::rfq::{
 pub use collateral::CollateralInfo;
 pub use protocol::{
     BaseAssetIndex, BaseAssetInfo, FeeParameters, Instrument, MintInfo, MintType, OracleSource,
-    PrintTradeProvider, ProtocolState, RiskCategory,
+    ProtocolState, RiskCategory,
 };
 pub use response::{
     AuthoritySide, Confirmation, DefaultingParty, Quote, QuoteSide, Response, ResponseState,

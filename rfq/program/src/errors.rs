@@ -156,4 +156,57 @@ pub enum ProtocolError {
     WhitelistAssocaitionRFQMismatch,
     #[msg("Invalid token program")]
     InvalidTokenProgram,
+    #[msg("Invalid token account")]
+    InvalidTokenAccount,
+    #[msg("Settlement type metadata is not empty")]
+    SettlementTypeMetadataIsNotEmpty,
+    #[msg("Settlement type metadata is empty")]
+    SettlementTypeMetadataIsEmpty,
+}
+
+#[error_code]
+pub enum ErrorCode {
+    // Existing errors...
+    
+    // Token related errors
+    #[msg("Invalid token program")]
+    InvalidTokenProgram,
+    
+    #[msg("Invalid token account")]
+    InvalidTokenAccount,
+
+    // Settlement related errors
+    #[msg("Settlement type metadata is empty")]
+    SettlementTypeMetadataIsEmpty,
+    
+    #[msg("Settlement type metadata is not empty")]
+    SettlementTypeMetadataIsNotEmpty,
+
+    // Protocol errors
+    #[msg("Not a collateral mint")]
+    NotACollateralMint,
+    
+    #[msg("Not a collateral token account")]
+    NotACollateralTokenAccount,
+    
+    #[msg("Not a risk engine")]
+    NotARiskEngine,
+    
+    #[msg("Invalid value for a fee")]
+    InvalidValueForAFee,
+    
+    #[msg("Not a whitelisted instrument")]
+    NotAWhitelistedInstrument,
+    
+    #[msg("Default value is not permitted")]
+    DefaultValueIsNotPermitted,
+    
+    #[msg("Invalid quote type")]
+    InvalidQuoteType,
+    
+    #[msg("Price should be positive")]
+    PriceShouldBePositive,
+    
+    #[msg("Additional data is not supported")]
+    AdditionalDataIsNotSupported,
 }

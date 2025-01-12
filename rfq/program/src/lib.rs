@@ -5,8 +5,7 @@
 #![allow(clippy::too_many_arguments)]
 
 use anchor_lang::prelude::*;
-use solana_security_txt::security_txt;
-use anchor_spl::token_interface::{Token2022, TokenInterface};
+use anchor_spl::token_interface::TokenAccount;
 
 pub mod common;
 pub mod errors;

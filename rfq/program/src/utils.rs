@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{TokenAccount, TokenInterface};
 
 use crate::errors::ProtocolError;
+use crate::errors::ErrorCode;
 
 pub trait ToAccountMeta {
     fn to_account_meta(&self) -> AccountMeta;
@@ -53,5 +54,12 @@ pub fn validate_token_account_mint(
         token_account.mint == *expected_mint,
         ErrorCode::InvalidTokenAccount
     );
+    Ok(())
+}
+
+pub fn validate_token_account(account: &Account<TokenAccount>) -> Result<()> {
+    if account.amount == 0 {
+        return Err(ErrorCode::InvalidTokenAccount.into());
+    }
     Ok(())
 }
