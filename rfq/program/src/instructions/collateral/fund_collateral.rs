@@ -4,7 +4,7 @@ use crate::{
     state::{CollateralInfo, ProtocolState},
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token::{transfer, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
 pub struct FundCollateralAccounts<'info> {
@@ -21,7 +21,7 @@ pub struct FundCollateralAccounts<'info> {
                 bump = collateral_info.token_account_bump)]
     pub collateral_token: Account<'info, TokenAccount>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Program<'info, TokenInterface>,
 }
 
 fn validate(ctx: &Context<FundCollateralAccounts>, amount: u64) -> Result<()> {
@@ -46,13 +46,17 @@ pub fn fund_collateral_instruction(
         ..
     } = ctx.accounts;
 
-    let transfer_accounts = Transfer {
-        from: user_tokens.to_account_info(),
-        to: collateral_token.to_account_info(),
-        authority: user.to_account_info(),
-    };
-    let transfer_ctx = CpiContext::new(token_program.to_account_info(), transfer_accounts);
-    transfer(transfer_ctx, amount)?;
+    anchor_spl::token_interface::transfer(
+        CpiContext::new(
+            token_program.to_account_info(),
+            anchor_spl::token_interface::Transfer {
+                from: user_tokens.to_account_info(),
+                to: collateral_token.to_account_info(),
+                authority: user.to_account_info(),
+            },
+        ),
+        amount,
+    )?;
 
     Ok(())
 }

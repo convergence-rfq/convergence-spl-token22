@@ -14,9 +14,9 @@ overflow-checks = true
 
 [workspace.dependencies]
 solana-program = "=1.16.25"  # Pin to exact version
+borsh = "=0.9.3"  # Pin to exact version
 anchor-lang = "=0.28.0"
 anchor-spl = "=0.28.0"
 spl-token-2022 = { version = "=0.6.1", features = ["no-entrypoint"] }
 spl-token = "=3.5.0"
 spl-memo = "=3.0.1"
-borsh = "=0.9.3"

@@ -79,4 +79,25 @@ pub fn transfer_tokens<'a>(
     )
 }
 
+pub fn transfer_collateral_token<'info>(
+    amount: u64,
+    from: &Account<'info, TokenAccount>,
+    to: &Account<'info, TokenAccount>,
+    collateral_info: &Account<'info, CollateralInfo>,
+    token_program: &Program<'info, TokenInterface>,
+) -> Result<()> {
+    anchor_spl::token_interface::transfer(
+        CpiContext::new_with_signer(
+            token_program.to_account_info(),
+            anchor_spl::token_interface::Transfer {
+                from: from.to_account_info(),
+                to: to.to_account_info(),
+                authority: collateral_info.to_account_info(),
+            },
+            &[],
+        ),
+        amount,
+    )
+}
+
 // Keep other non-print-trade related functions...

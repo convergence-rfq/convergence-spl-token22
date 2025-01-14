@@ -157,26 +157,13 @@ impl Response {
                     PriceQuote::AbsolutePrice {
                         amount_bps: price_bps,
                     },
-            } => match rfq.fixed_size {
-                FixedSize::None { padding: _ } => unreachable!(),
-                FixedSize::BaseAsset {
-                    legs_multiplier_bps,
-                } => legs_multiplier_bps,
-                FixedSize::QuoteAsset { quote_amount } => {
-                    // only positive prices allowed for fixed quote asset rfqs
-                    let price_bps = price_bps as u128;
-
-                    // quote multiplied by leg decimals divided by the price
-                    let leg_multiplier_bps = quote_amount as u128
-                        * 10_u128.pow(Quote::LEG_MULTIPLIER_DECIMALS)
-                        * 10_u128.pow(PriceQuote::ABSOLUTE_PRICE_DECIMALS)
-                        / price_bps;
-
-                    leg_multiplier_bps
-                        .try_into()
-                        .map_err(|_| error!(ProtocolError::AssetAmountOverflow))
-                        .unwrap()
-                }
+            } => {
+                let legs_multiplier_bps = if rfq.fixed_size {
+                    1_000_000
+                } else {
+                    0
+                };
+                legs_multiplier_bps
             },
         }
     }
@@ -195,12 +182,13 @@ impl Response {
             } => legs_multiplier_bps,
             Quote::FixedSize {
                 price_quote: PriceQuote::AbsolutePrice { amount_bps: _ },
-            } => match rfq.fixed_size {
-                FixedSize::BaseAsset {
-                    legs_multiplier_bps,
-                } => legs_multiplier_bps,
-                FixedSize::None { padding: _ } => unreachable!(),
-                FixedSize::QuoteAsset { quote_amount: _ } => unreachable!(),
+            } => {
+                let legs_multiplier_bps = if rfq.fixed_size {
+                    1_000_000
+                } else {
+                    0
+                };
+                legs_multiplier_bps
             },
         };
 
@@ -360,6 +348,17 @@ impl Response {
         token_account: &Account<TokenAccount>,
     ) -> Result<()> {
         // Add token account validation logic
+        Ok(())
+    }
+
+    pub fn validate_token_account(
+        &self,
+        token_account: &Account<TokenAccount>,
+    ) -> Result<()> {
+        require!(
+            token_account.amount > 0,
+            ProtocolError::InvalidTokenAccount
+        );
         Ok(())
     }
 }

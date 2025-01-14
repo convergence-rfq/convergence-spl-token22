@@ -5,7 +5,7 @@ use crate::{
     state::{CollateralInfo, ProtocolState},
 };
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, TokenAccount};
+use anchor_spl::token_interface::{TokenAccount, TokenInterface};
 
 #[derive(Accounts)]
 pub struct WithdrawCollateralAccounts<'info> {
@@ -22,7 +22,7 @@ pub struct WithdrawCollateralAccounts<'info> {
                 bump = collateral_info.token_account_bump)]
     pub collateral_token: Account<'info, TokenAccount>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Program<'info, TokenInterface>,
 }
 
 fn validate(ctx: &Context<WithdrawCollateralAccounts>, amount: u64) -> Result<()> {
@@ -63,4 +63,25 @@ pub fn withdraw_collateral_instruction(
     )?;
 
     Ok(())
+}
+
+pub fn transfer_collateral_token<'info>(
+    amount: u64,
+    from: &Account<'info, TokenAccount>,
+    to: &Account<'info, TokenAccount>,
+    collateral_info: &Account<'info, CollateralInfo>,
+    token_program: &Program<'info, TokenInterface>,
+) -> Result<()> {
+    anchor_spl::token_interface::transfer(
+        CpiContext::new_with_signer(
+            token_program.to_account_info(),
+            anchor_spl::token_interface::Transfer {
+                from: from.to_account_info(),
+                to: to.to_account_info(),
+                authority: collateral_info.to_account_info(),
+            },
+            &[],
+        ),
+        amount,
+    )
 }

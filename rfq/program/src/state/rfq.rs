@@ -1,4 +1,3 @@
-use std::io;
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::TokenAccount;
 
@@ -14,7 +13,7 @@ pub struct Rfq {
     pub taker_token: Pubkey,
     pub token_program: Pubkey,
     pub order_type: OrderType,
-    pub fixed_size: bool,
+    pub fixed_size: FixedSize,
     pub quote_asset: QuoteAsset,
     pub creation_timestamp: i64,
 
@@ -82,7 +81,7 @@ impl Rfq {
     }
 
     pub fn is_fixed_size(&self) -> bool {
-        matches!(self.fixed_size, true)
+        matches!(self.fixed_size, FixedSize::BaseAsset { .. })
     }
 
     pub fn get_asset_instrument_data(&self, asset_identifier: AssetIdentifier) -> &Vec<u8> {
@@ -180,14 +179,21 @@ impl From<ApiLeg> for Leg {
 #[derive(AnchorSerialize, AnchorDeserialize, Copy, Clone)]
 pub enum SettlementTypeMetadata {
     Instrument { instrument_index: u8 },
-    PrintTrade { instrument_type: u8 }, // keeping it opaque, as it's related to the risk engine logic
+    PrintTrade { instrument_type: u8 },
 }
 
 impl SettlementTypeMetadata {
+    pub fn is_empty(&self) -> bool {
+        match self {
+            SettlementTypeMetadata::PrintTrade { .. } => true,
+            SettlementTypeMetadata::Instrument { .. } => false,
+        }
+    }
+
     pub fn get_instrument_index(&self) -> Option<u8> {
         match self {
             SettlementTypeMetadata::Instrument { instrument_index } => Some(*instrument_index),
-            SettlementTypeMetadata::PrintTrade { instrument_type: _ } => None,
+            SettlementTypeMetadata::PrintTrade { .. } => None,
         }
     }
 }
@@ -253,6 +259,14 @@ pub enum AssetIdentifier {
 }
 
 impl AssetIdentifier {
+    pub fn from_bytes(bytes: (u8, u8)) -> Self {
+        match bytes {
+            (0, leg_index) => AssetIdentifier::Leg { leg_index },
+            (1, 0) => AssetIdentifier::Quote,
+            _ => panic!("Invalid bytes for AssetIdentifier"),
+        }
+    }
+
     pub fn to_bytes(self) -> [u8; 2] {
         match self {
             AssetIdentifier::Leg { leg_index } => [0, leg_index],
